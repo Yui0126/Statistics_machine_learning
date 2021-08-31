@@ -1,0 +1,170 @@
+---
+title: "Statistical Inference Project Part 1: Simulation vs Theoretical"
+author: "Yui Naruse"
+date: "2021/8/26"
+output: html_document
+---
+
+## Overview
+In this part 1 of the final project of *Coursera: Statistical Inference*, I conduced a simulations of exponential distribution and compared the results with the Central Limit Theorem. The results are presented as follows;
+
+
+
+- Comparing the distribution of 1000 exponentials and 1000 means of 40 exponentials both simulated using `rexp`  
+- Comparing the sample mean and the theoretical mean
+compare exponential distribution and Central Limit Theorem  
+- mean of exponential distribution is 1/lambda, sd is also 1/lambda, and lambda is 0.2 for ALL the simulations  
+- investigate the distribution of averages of 40 exponential  
+- do a thousand simulations
+
+```{r, echo=FALSE, results='hide', message=FALSE}
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(vcd)
+library(ggpubr)
+library(knitr)
+library(kableExtra)
+library(GGally)
+```
+
+**Setting conditions**
+Firstly, specific values were assigned to conduct the simulations for this project as required.
+```{r}
+set.seed(100000)
+lambda <- 0.2
+sim <- 1000 # number of simulations
+sampsize <- 40 # number of samples
+```
+
+**Distribution of exponentials**
+Let's explore how the 40 exponentials look like with histogram.
+```{r}
+expo40 <- rexp(sampsize, lambda)
+expo40data <- as.data.frame(expo40)
+ggplot(expo40data, aes(x=expo40)) +
+  geom_histogram(bins = 40, color = "darkblue", fill = "lightsteelblue2")
+```
+
+
+Next, the 1000 simulations of 40 exponentials were conducted using `for` loop function and the plot below shows its result.
+```{r}
+expo <- NULL
+for (i in 1:1000) expo = c(expo, rexp(sampsize, lambda))
+expodata <- as.data.frame(expo)
+
+ggplot(expodata, aes(x=expo)) +
+  geom_histogram(bins = 60, color = "darkblue", fill = "lightsteelblue2") +
+  labs(title = "Distribution of Simulated Exponentials")
+```
+
+
+
+### **Comparing the mean**
+```{r, figures-side, fig.show='hold', out.width="50%"}
+di <- gl(1000, 40)
+simmean <- tapply(expo, di, mean)
+
+simmeandata <- as.data.frame(simmean)
+str(simmeandata)
+
+sampmean <- mean(simmean)
+theomean <- 1/0.2
+
+abs(sampmean - theomean)
+
+
+simmeandata <- simmeandata %>%
+  mutate(type = replicate(1000, "simulation"))
+
+fig <- ggplot(simmeandata, aes(x=simmean)) +
+  geom_histogram(bins =60, color = "darkblue", fill = "lightsteelblue2") +
+  geom_vline(aes(xintercept = mean(simmean)), 
+             color = "black", size = 1.3) +
+  geom_vline(aes(xintercept = theomean), color = "salmon", size = 1.3)
+fig
+fig + scale_x_continuous(limits = c(4.9,5.1))
+
+```
+
+
+
+### **Comparing the variance**  
+compare sample variance to theoretical variance
+-> show the variability of the mean of 40 exponentials
+comapare it to the theoretical variance/standard error of the distribution
+```{r}
+sampvar <- var(simmean)
+sampvar
+
+theovar <- (1/lambda^2)/sampsize
+theovar
+sampvar - theovar
+```
+
+
+```{r}
+vartest <- tapply(expo, di, var)
+vartest <- as.data.frame(vartest)
+
+vartest <- vartest %>%
+  mutate(se = vartest/sampsize)
+colnames(vartest) <- c("variance", "se")
+```
+
+```{r}
+try <- NULL
+for (i in 1:1000) try = c(try, rexp(1000, lambda))
+du <- gl(1000, 1000)
+tryvar <- tapply(try, du, var)
+str(tryvar)
+tryvar <- as.data.frame(tryvar)
+
+tryvar <- tryvar %>%
+  mutate(se = tryvar/40)
+str(tryvar)
+colnames(tryvar) <- c("variance","se")
+
+tryvar <- tryvar %>%
+  mutate(n = replicate(1000, "1000"))
+vartest <- vartest %>%
+  mutate(n = replicate(1000, "40"))
+  
+variances <- rbind(tryvar, vartest)
+
+ggplot(variances, aes(x = se, fill = n, color = n)) +
+  geom_density(size = 1.5, alpha = 0.5) +
+  scale_color_brewer(palette = "Paired") +
+  scale_fill_brewer(palette ="Paired") +
+  geom_vline(xintercept = theovar, size = 1.5, color = "salmon")
+
+```
+
+
+
+Now to the standard deviation and standard error of the mean
+standard deviations of sample means (averages of 40 draws)
+
+variability in averages of height
+
+
+
+
+
+
+```{r}
+sampsd <- sd(simmean)
+theosd <- sqrt(theovar)
+
+sampsd - theosd
+```
+
+
+```{r}
+sampse <- sampsd/sqrt(sampsize)
+theose <- theosd/sqrt(sampsize)
+sampse - theose
+```
+
+
