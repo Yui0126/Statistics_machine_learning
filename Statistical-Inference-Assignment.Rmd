@@ -1,0 +1,233 @@
+---
+title: 'Statistical Inference Project Part 1: Simulation Exercise'
+author: "Yui Naruse"
+date: "2021/11/29"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+## Overview
+In this part 1 of the final project of *Coursera: Statistical Inference*, I conduced a simulations of exponential distribution and compared the results with the Central Limit Theorem. The results are presented in the following order;
+
+
+- **Exponential Distributions**. Comparing the distribution of 40 exponentials and 1000 simulated exponentials with sample size of 40.  
+- **Comparison of the means**. Comparing the averages of the mean with the theoretical mean and evaluation of its distribution.  
+- **Comparison of the variances**. Comparing the variance of the means of exponentials with theoretical variance and examining its distribution.  
+
+
+From all these evaluations, it became clear that although the original shape of the exponential distribution has right skewed shape, the distribution of means of simulation of 40 exponentials has a shape close to that of normal distribution and it's centered around theoretical mean. The variance is also close to the theoretical variance and its center of the distribution gets centered around the theoretical value as the number of sample gets bigger.
+
+```{r, echo=FALSE, results='hide', message=FALSE}
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(tinytex)
+```
+
+```{r setup, echo=FALSE, results='hide', include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+**Setting conditions**
+Before conducting simulations and comparisons, specific numbers were assigned to certain values as shown in the Table 1.
+```{r, echo=FALSE}
+set.seed(100000)
+lambda <- 0.2
+sim <- 1000 # number of simulations
+sampsize <- 40 # number of samples
+theomean <- 1/0.2 # theoretical mean
+theovar <- 1/lambda^2/sampsize #theoretical variance
+theosd <- sqrt(theovar) # theoretical standard deviation
+theose <- theosd/sqrt(sampsize) # theoretical standard error
+```
+
+```{r, echo=FALSE}
+a <- c("theoretical mean", "theoretical variance","theoretical standard 
+       deviation","theoretical standard error")
+b <- round(c(theomean, theovar, theosd, theose), 3)
+
+values <- data.frame(a,b)
+knitr::kable(values, col.names = NULL, caption = "Theoretical Values") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+### **Exponential Distribution**
+Firstly, exponential distribution of sample size 40 with lambda 0.2 was obtained through function `rexp` and its result is shown in the plot on the left side below. Since the number of sample is small, the distribution seems rather bumpy but we can see that it has right skewed shape.
+
+If we conduct 1000 simulations of such 40 exponentials, the distribution looks smoother as shown in the plot on the right side.
+
+```{r, fig.show='hold', out.width="50%", echo=FALSE}
+# 40 exponentials
+expo40 <- rexp(sampsize, lambda)
+expo40data <- as.data.frame(expo40)
+ggplot(expo40data, aes(x=expo40)) +
+  geom_histogram(bins = 40, color = "darkblue", fill = "lightsteelblue2") +
+  labs(title = "Distribution of 40 exponentials") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("x")
+
+# 1000 simulations of 40 exponentials
+expo <- NULL
+for (i in 1:1000) expo = c(expo, rexp(sampsize, lambda))
+expodata <- as.data.frame(expo)
+ggplot(expodata, aes(x=expo)) +
+  geom_histogram(bins = 60, color = "darkblue", fill = "lightsteelblue2") +
+  labs(title = "Distribution of 1000 Simulated Exponentials") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("x")
+```
+
+
+
+### **Comparison of the means**  
+Now that we got the simulated data of exponentials, we can compare its distribution of averages of the sample mean and its value with the theoretical mean.
+```{r, echo=FALSE}
+di <- gl(1000, 40)
+simmean <- tapply(expo, di, mean)
+simmeandata <- as.data.frame(simmean)
+```
+
+From the distribution of the averages of the mean of 40 exponentials shown below, it can be said that the distribution closely follows that of normal distribution with almost symmetrical shape. It's also centered around theoretical mean, which was 5.
+```{r, fig.show='hold', out.width="60%", fig.align='center', echo=FALSE, message=FALSE,}
+dens <- ggplot(simmeandata, aes(x=simmean)) +
+  geom_histogram(aes(y = ..density..), bins = 60, color = "darkblue", 
+                 fill = "lightsteelblue2")
+dens + scale_color_manual("Legend title", values = "salmon") +
+  labs(title = "Distribution of Averages of the Means") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("mean")
+```
+
+
+
+The absolute value of the differences between mean of all the averages of the sampled exponentials and the theoretical mean was only **0.01403**.
+```{r, echo=FALSE, fig.show='hold'}
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+sampmean <- round(mean(simmean), 5) # mean of all the averages 
+difmean <- round(abs(sampmean - theomean),5)
+
+a <- c("sample", sampmean)
+b <- c("theoretical", theomean)
+c <- c("difference", difmean)
+mean <- data.frame(a,b,c)
+knitr::kable(mean, col.names = NULL, caption = "Comparing the means") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+
+We can visually see that the difference is so small that it is almost overlapping when plotted without scaling. The black line is the sample mean and the salmon colored line is the theoretical mean.
+```{r, figures-side, fig.show='hold', out.width="50%", message=FALSE, echo=FALSE}
+fig <- ggplot(simmeandata, aes(x=simmean)) +
+  geom_histogram(bins = 60, color = "darkblue", fill = "lightsteelblue2") +
+  geom_vline(aes(xintercept = mean(simmean)), 
+             color = "black", size = 1.3) +
+  geom_vline(aes(xintercept = theomean), color = "salmon", size = 1.3) +
+  labs(title = "Distribution of Averages of the Means") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("mean")
+fig
+fig + scale_x_continuous(limits = c(4.9,5.1)) +
+  labs(title = "Scaling the x axis") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("mean")
+```
+
+
+### **Comparison of the variances**  
+In this section, evaluation and comparison of the variances of the simulated exponentials were conducted.
+
+when you divide variance with sample size, it is no longer measuring the variability of the exponentials, but it is talking about the variability of the averages of the exponentials.
+
+
+Firstly, the difference of the sample variance and theoretical variance was calculated. We can see that the difference was again quite small with **0.05381**.
+```{r, echo=FALSE, fig.show='hold'}
+knitr::opts_chunk$set(fig.pos = "!H", out.extra = "")
+sampvar <- round(var(simmean), 5)
+dif <- round(abs(sampvar - theovar), 5)
+a <- c("sample", sampvar)
+b <- c("theoretical", theovar)
+c <- c("difference", dif)
+vari <- data.frame(a,b,c)
+knitr::kable(vari, col.names = NULL, caption = "Comparing the variances") %>%
+  kable_styling(full_width = F, latex_options = "hold_position") # this one worked
+```
+
+**Distribution of the sample variances**
+The variance of the 1000 simulated 40 exponentials was calculated as follows.  
+Note that when you divide the variance with sample size (which is 40), it calculates the variance of the distribution of of the means of samples of 40 exponentials.
+```{r, echo=FALSE}
+vartest <- tapply(expo, di, var);
+vartest <- as.data.frame(vartest)
+vartest <- vartest %>%
+  mutate(sv = vartest/sampsize)
+colnames(vartest) <- c("variance", "sv")
+```
+
+In order to evaluate the nature of sample variance($S^2$), the sample variance  of the exponentials was calculated and compared to the theoretical variance. Distribution plot of the variances of each exponentials was also plotted. As shown below, the sample variance is centered around the theoretical variance (population variance).  
+```{r, fig.show='hold', out.width="60%", fig.align='center', echo=FALSE}
+vartest <- vartest %>%
+  mutate(n = replicate(1000, "40"))
+
+ggplot(vartest, aes(x = sv, fill = n, color = n)) +
+  geom_density(size = 1.5, alpha = 0.5) +
+  scale_color_brewer(palette = "Paired") +
+  scale_fill_brewer(palette ="Paired") +
+  geom_vline(xintercept = theovar, size = 1.5, color = "salmon") +
+  xlab("Variance of the Averages of the Means")
+```
+
+
+#### Comparison of the standard deviation and standard error  
+
+Along with the sample variances, we can also calculate **the standard deviation** and **the standard error** to compare them with the theoretical values.
+
+- $S^2$  the sample variance  
+- $S$  the standard deviation: how variable the population is  
+- $\frac{S}{\sqrt{n}}$  the standard error: how variable averages of random samples of size $n$ are  
+
+<br/>
+
+```{r, echo=FALSE}
+sampsd <- round(sqrt(sampvar),5)
+theosd <- round(theosd, 5)
+dif <- round(abs(sampsd - theosd),5)
+a <- c("sample", sampsd)
+b <- c("theoretical$", theosd)
+c <- c("difference", dif)
+sd <- data.frame(a,b,c)
+knitr::kable(sd, col.names = NULL, caption = "Comparing Standard Deviation") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+
+
+Finally, let's have a quick check of the standard error of the mean. Standard error of the mean, which can be calculated by dividing the standard deviation with square root of the sample size, shows how variable the averages of random samples are from the population.
+```{r, echo=FALSE}
+sampse <- round(sampsd/sqrt(sampsize),5)
+theose <- round(theose, 5)
+dif <- round(abs(sampse - theose),5)
+a <- c("sample", sampse)
+b <- c("theoretical", theose)
+c <- c("difference", dif)
+se <- data.frame(a,b,c)
+knitr::kable(se, col.names = NULL, caption = "Comparing Standard Error") %>%
+  kable_styling(full_width = F)
+```
+
+
+
+### Conclusions  
+From the examination of the 1000 simulations of exponentials, we could see that when we have enough sample, the values yielded by analyses (i.e. sample mean and variances) tend to get close to that of the theoretical values.
+This conclusion is significant as it implies that the more samples we get and do more simulations, the more likely we get good approximation of the true population value. However, it should not be forgotten that if the sample has skewed data it could not be used as the representation of the population. 
+
+
+\newpage
+
+### Appendix: All code for this report
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
