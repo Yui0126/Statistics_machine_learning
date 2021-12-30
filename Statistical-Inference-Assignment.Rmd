@@ -1,14 +1,14 @@
 ---
 title: 'Statistical Inference Project Part 1: Simulation Exercise'
-author: "Yui Naruse"
-date: "2021/11/29"
+author: "Yui Naruse (31/12/2021)"
+date:
 output:
   pdf_document: default
   html_document: default
 ---
 
 ## Overview
-In this part 1 of the final project of *Coursera: Statistical Inference*, I conduced a simulations of exponential distribution and compared the results with the Central Limit Theorem. The results are presented in the following order;
+In this part 1 of the final project of *Coursera: Statistical Inference*, I conduced simulations of exponential distribution and compared the results with the Central Limit Theorem. The results are presented in the following order;
 
 
 - **Exponential Distributions**. Comparing the distribution of 40 exponentials and 1000 simulated exponentials with sample size of 40.  
@@ -16,7 +16,7 @@ In this part 1 of the final project of *Coursera: Statistical Inference*, I cond
 - **Comparison of the variances**. Comparing the variance of the means of exponentials with theoretical variance and examining its distribution.  
 
 
-From all these evaluations, it became clear that although the original shape of the exponential distribution has right skewed shape, the distribution of means of simulation of 40 exponentials has a shape close to that of normal distribution and it's centered around theoretical mean. The variance is also close to the theoretical variance and its center of the distribution gets centered around the theoretical value as the number of sample gets bigger.
+From all these evaluations, it became clear that although the original shape of the exponential distribution has right skewed shape, the distribution of means of simulation of 40 exponentials has a shape close to that of normal distribution and it's concentrated around theoretical mean. The variance, standard deviation and standard error are also close to the theoretical values.
 
 ```{r, echo=FALSE, results='hide', message=FALSE}
 library(devtools)
@@ -32,7 +32,7 @@ library(tinytex)
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
-**Setting conditions**
+**Setting conditions:**
 Before conducting simulations and comparisons, specific numbers were assigned to certain values as shown in the Table 1.
 ```{r, echo=FALSE}
 set.seed(100000)
@@ -49,20 +49,17 @@ theose <- theosd/sqrt(sampsize) # theoretical standard error
 a <- c("theoretical mean", "theoretical variance","theoretical standard 
        deviation","theoretical standard error")
 b <- round(c(theomean, theovar, theosd, theose), 3)
-
 values <- data.frame(a,b)
 knitr::kable(values, col.names = NULL, caption = "Theoretical Values") %>%
-  kable_styling(full_width = F)
+  kable_styling(full_width = F, latex_options = "hold_position")
 ```
 
 
 
 ### **Exponential Distribution**
-Firstly, exponential distribution of sample size 40 with lambda 0.2 was obtained through function `rexp` and its result is shown in the plot on the left side below. Since the number of sample is small, the distribution seems rather bumpy but we can see that it has right skewed shape.
+Firstly, exponential distribution of sample size 40 with lambda 0.2 was obtained through function `rexp` as shown in the left figure on the next page. Since the number of sample is small, the distribution seems rather bumpy but we can see that it has right skewed shape. If we conduct 1000 simulations of such 40 exponentials, the distribution looks smoother as shown in the gifure on the right.
 
-If we conduct 1000 simulations of such 40 exponentials, the distribution looks smoother as shown in the plot on the right side.
-
-```{r, fig.show='hold', out.width="50%", echo=FALSE}
+```{r, fig.align = 'center', fig.show='hold', out.width="40%", echo=FALSE}
 # 40 exponentials
 expo40 <- rexp(sampsize, lambda)
 expo40data <- as.data.frame(expo40)
@@ -93,18 +90,6 @@ simmean <- tapply(expo, di, mean)
 simmeandata <- as.data.frame(simmean)
 ```
 
-From the distribution of the averages of the mean of 40 exponentials shown below, it can be said that the distribution closely follows that of normal distribution with almost symmetrical shape. It's also centered around theoretical mean, which was 5.
-```{r, fig.show='hold', out.width="60%", fig.align='center', echo=FALSE, message=FALSE,}
-dens <- ggplot(simmeandata, aes(x=simmean)) +
-  geom_histogram(aes(y = ..density..), bins = 60, color = "darkblue", 
-                 fill = "lightsteelblue2")
-dens + scale_color_manual("Legend title", values = "salmon") +
-  labs(title = "Distribution of Averages of the Means") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("mean")
-```
-
-
 
 The absolute value of the differences between mean of all the averages of the sampled exponentials and the theoretical mean was only **0.01403**.
 ```{r, echo=FALSE, fig.show='hold'}
@@ -120,7 +105,10 @@ knitr::kable(mean, col.names = NULL, caption = "Comparing the means") %>%
   kable_styling(full_width = F, latex_options = "hold_position")
 ```
 
-We can visually see that the difference is so small that it is almost overlapping when plotted without scaling. The black line is the sample mean and the salmon colored line is the theoretical mean.
+
+From the distribution of the averages of the mean of 40 exponentials shown in the left figure, it can be said that the distribution closely follows that of normal distribution with almost symmetrical shape. It's also centered around theoretical mean, which was 5.
+
+From the plot on the right side, we can see that the difference is so small that it is almost overlapping when plotted without scaling. The black line is the sample mean and the salmon colored line is the theoretical mean.
 ```{r, figures-side, fig.show='hold', out.width="50%", message=FALSE, echo=FALSE}
 fig <- ggplot(simmeandata, aes(x=simmean)) +
   geom_histogram(bins = 60, color = "darkblue", fill = "lightsteelblue2") +
@@ -157,7 +145,7 @@ knitr::kable(vari, col.names = NULL, caption = "Comparing the variances") %>%
   kable_styling(full_width = F, latex_options = "hold_position") # this one worked
 ```
 
-**Distribution of the sample variances**
+**Distribution of the sample variances:**
 The variance of the 1000 simulated 40 exponentials was calculated as follows.  
 Note that when you divide the variance with sample size (which is 40), it calculates the variance of the distribution of of the means of samples of 40 exponentials.
 ```{r, echo=FALSE}
@@ -169,7 +157,7 @@ colnames(vartest) <- c("variance", "sv")
 ```
 
 In order to evaluate the nature of sample variance($S^2$), the sample variance  of the exponentials was calculated and compared to the theoretical variance. Distribution plot of the variances of each exponentials was also plotted. As shown below, the sample variance is centered around the theoretical variance (population variance).  
-```{r, fig.show='hold', out.width="60%", fig.align='center', echo=FALSE}
+```{r, fig.show='hold', out.width="50%", fig.align='center', echo=FALSE}
 vartest <- vartest %>%
   mutate(n = replicate(1000, "40"))
 
@@ -182,42 +170,25 @@ ggplot(vartest, aes(x = sv, fill = n, color = n)) +
 ```
 
 
-#### Comparison of the standard deviation and standard error  
+#### Evaluating the standard deviation and standard error:  
 
-Along with the sample variances, we can also calculate **the standard deviation** and **the standard error** to compare them with the theoretical values.
+Along with the sample variances, we can also calculate **the standard deviation**: $S$, which shows how variable the population is, and **the standard error**: $\frac{S}{\sqrt{n}}$, which shows how variable the averages of random samples are from the population, to compare them with the theoretical values.
 
-- $S^2$  the sample variance  
-- $S$  the standard deviation: how variable the population is  
-- $\frac{S}{\sqrt{n}}$  the standard error: how variable averages of random samples of size $n$ are  
-
-<br/>
-
-```{r, echo=FALSE}
+```{r,out.width="40%", echo=FALSE}
+# standard deviation
 sampsd <- round(sqrt(sampvar),5)
 theosd <- round(theosd, 5)
-dif <- round(abs(sampsd - theosd),5)
-a <- c("sample", sampsd)
-b <- c("theoretical$", theosd)
-c <- c("difference", dif)
-sd <- data.frame(a,b,c)
-knitr::kable(sd, col.names = NULL, caption = "Comparing Standard Deviation") %>%
-  kable_styling(full_width = F, latex_options = "hold_position")
-```
-
-
-Finally, let's have a quick check of the standard error of the mean. Standard error of the mean, which can be calculated by dividing the standard deviation with square root of the sample size, shows how variable the averages of random samples are from the population.
-```{r, echo=FALSE}
+difsd <- round(abs(sampsd - theosd),5)
 sampse <- round(sampsd/sqrt(sampsize),5)
 theose <- round(theose, 5)
-dif <- round(abs(sampse - theose),5)
-a <- c("sample", sampse)
-b <- c("theoretical", theose)
-c <- c("difference", dif)
-se <- data.frame(a,b,c)
-knitr::kable(se, col.names = NULL, caption = "Comparing Standard Error") %>%
-  kable_styling(full_width = F)
+difse <- round(abs(sampse - theose),5)
+a <- c(" ", "sample", "theoretical","difference")
+b <- c("Standard deviation", sampsd,theosd,difsd)
+c <- c("Standard error", sampse,theose,difse)
+sd <- data.frame(a,b,c)
+knitr::kable(sd, col.names = NULL, caption = "Comparing theoretical and sample values of Standard Deviation and Standard Error") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
 ```
-
 
 
 ### Conclusions  
@@ -227,7 +198,7 @@ This conclusion is significant as it implies that the more samples we get and do
 
 \newpage
 
-### Appendix: All code for this report
+### Appendix: Codes for this report
 
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```
