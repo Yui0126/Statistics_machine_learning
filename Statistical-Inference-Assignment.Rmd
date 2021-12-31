@@ -182,11 +182,13 @@ difsd <- round(abs(sampsd - theosd),5)
 sampse <- round(sampsd/sqrt(sampsize),5)
 theose <- round(theose, 5)
 difse <- round(abs(sampse - theose),5)
-a <- c(" ", "sample", "theoretical","difference")
-b <- c("Standard deviation", sampsd,theosd,difsd)
-c <- c("Standard error", sampse,theose,difse)
-sd <- data.frame(a,b,c)
-knitr::kable(sd, col.names = NULL, caption = "Comparing theoretical and sample values of Standard Deviation and Standard Error") %>%
+a <- c(" ", "Standard deviation", "Standard error")
+b <- c("sample", sampsd,sampse)
+c <- c("theoretical",theosd,theose)
+d <- c("difference",difsd,difse)
+sd <- data.frame(a,b,c,d)
+knitr::kable(sd, col.names = NULL, caption = "Comparing theoretical and 
+sample values of Standard Deviation and Standard Error") %>%
   kable_styling(full_width = F, latex_options = "hold_position")
 ```
 
