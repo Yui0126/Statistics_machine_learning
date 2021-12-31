@@ -1,5 +1,5 @@
 ---
-title: 'Statistical Inference Project Part 1: Simulation Exercise'
+title: 'Statistical Inference Final Project'
 author: "Yui Naruse (31/12/2021)"
 date:
 output:
@@ -7,7 +7,7 @@ output:
   html_document: default
 ---
 
-## Overview
+# Part 1: Simulation Exercise **Overview**
 In this part 1 of the final project of *Coursera: Statistical Inference*, I conduced simulations of exponential distribution and compared the results with the Central Limit Theorem. The results are presented in the following order;
 
 
@@ -196,6 +196,59 @@ sample values of Standard Deviation and Standard Error") %>%
 ### Conclusions  
 From the examination of the 1000 simulations of exponentials, we could see that when we have enough sample, the values yielded by analyses (i.e. sample mean and variances) tend to get close to that of the theoretical values.
 This conclusion is significant as it implies that the more samples we get and do more simulations, the more likely we get good approximation of the true population value. However, it should not be forgotten that if the sample has skewed data it could not be used as the representation of the population. 
+
+
+\newpage
+
+# Part 2: Basic Inferential Data Analysis **Overview**
+The dataset ["ToothGrowth"](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/ToothGrowth) contains information about the length of odontoblasts (cells responsible for the tooth growth) in 60 guinea pigs.\newline Results of the analysis are presented in the following order.
+
+- **Sumamry Statistics of the dataset**. Summary statistics and distribution of the tooth length grouped by the delivery method (i.e. orange juice or ascorbic acid).
+- **Hypothesis testing**. Evaluation of whether method and/or dose affect toothj growth through hypothesis testing.
+
+Summary
+
+
+### **Summary statistics of the tooth length grouped by delivery method**
+From the table below, we can see that both mean and median of the tooth length of those who got orange juice (`OJ`) are higher than those who were given vitamin C (`VC`).
+
+```{r, out.width="50%", echo=FALSE}
+data("ToothGrowth")
+oj <- ToothGrowth[ToothGrowth$supp == "OJ",]
+vc <- ToothGrowth[ToothGrowth$supp == "VC",]
+valueoj <- oj %>%
+  summarise(mean = mean(len), median = median(len), min = min(len), max = max(len))
+valuevc <- vc %>%
+  summarise(mean = mean(len), median = median(len), min = min(len), max = max(len))
+summary <- rbind(valueoj, valuevc)
+rownames(summary) <- c("Orange Juice", "Vitamin C")
+knitr::kable(summary, caption = "Summary statistics of the tooth length") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+
+From the histogram below, we can see that those with `VC` have wider range of distribution, whereas that of `OJ` is more concentrated around the median. Also note that as the number of sample is not that high, distribution shape does not look that of a smooth normal distribution, but for the sake of analysis, I will use the data to conduct hypothesis testing in the next section. \newline From the boxplot, we can see that as the dose gets higher, the level of growth alos gets higher.
+
+```{r, fig.show='hold', out.width="45%",  fig.align='center', echo=FALSE}
+ggplot(ToothGrowth, aes(x=len, fill = supp, color = supp)) +
+  geom_histogram(bins = 60) +
+  labs(title = "Distribution of the tooth length") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("length")
+
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+ggplot(ToothGrowth, aes(x=supp, y=len, fill=dose)) +
+  geom_boxplot(width=0.4) +
+  labs(title = "Boxplot of the tooth length") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("method") +
+  ylab("tooth length")
+```
+
+
+```{r fig.show='hold', out.width="60%",  fig.align='center', echo=FALSE}
+
+```
+
 
 
 \newpage
