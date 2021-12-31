@@ -212,21 +212,22 @@ Summary
 ### **Summary statistics of the tooth length grouped by delivery method**
 From the table below, we can see that both mean and median of the tooth length of those who got orange juice (`OJ`) are higher than those who were given vitamin C (`VC`).
 
-```{r, out.width="50%", echo=FALSE}
-data("ToothGrowth")
+```{r, out.width="60%", echo=FALSE}
+data(ToothGrowth)
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
 oj <- ToothGrowth[ToothGrowth$supp == "OJ",]
 vc <- ToothGrowth[ToothGrowth$supp == "VC",]
 valueoj <- oj %>%
-  summarise(mean = mean(len), median = median(len), min = min(len), max = max(len))
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
 valuevc <- vc %>%
-  summarise(mean = mean(len), median = median(len), min = min(len), max = max(len))
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
 summary <- rbind(valueoj, valuevc)
 rownames(summary) <- c("Orange Juice", "Vitamin C")
 knitr::kable(summary, caption = "Summary statistics of the tooth length") %>%
   kable_styling(full_width = F, latex_options = "hold_position")
 ```
 
-From the histogram below, we can see that those with `VC` have wider range of distribution, whereas that of `OJ` is more concentrated around the median. Also note that as the number of sample is not that high, distribution shape does not look that of a smooth normal distribution, but for the sake of analysis, I will use the data to conduct hypothesis testing in the next section. \newline From the boxplot, we can see that as the dose gets higher, the level of growth alos gets higher.
+From the histogram below, we can see that those with `VC` have wider range of distribution, whereas that of `OJ` is more concentrated around the median. However, due to the small sample size it is difficult to conclude whether it has the shape of normal distribution. \newline From the boxplot, we can see that as the dose gets higher, the level of growth also gets higher.
 
 ```{r, fig.show='hold', out.width="45%",  fig.align='center', echo=FALSE}
 ggplot(ToothGrowth, aes(x=len, fill = supp, color = supp)) +
@@ -235,7 +236,7 @@ ggplot(ToothGrowth, aes(x=len, fill = supp, color = supp)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("length")
 
-ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+
 ggplot(ToothGrowth, aes(x=supp, y=len, fill=dose)) +
   geom_boxplot(width=0.4) +
   labs(title = "Boxplot of the tooth length") +
@@ -244,9 +245,29 @@ ggplot(ToothGrowth, aes(x=supp, y=len, fill=dose)) +
   ylab("tooth length")
 ```
 
+So, could we actually say that different delivery method correlates with the average of the tooth length? Confidence interval was calculated manually, as well as using `t.test` function in `r` as shown in the table below. As the results contain $0$, we cannot conclude that the method is correlated with the tooth length.
+
 
 ```{r fig.show='hold', out.width="60%",  fig.align='center', echo=FALSE}
+methodoj <- oj[,1]
+methodvc <- vc[,1]
+ci_t.test <- t.test(methodoj, methodvc, paired = FALSE)$conf
+sp <- sqrt((29*6.606^2+29*8.266^2)/(30+30-2))
+ci_manual <- 20.663-16.963+c(-1,1)*qt(.975,58)*sp*(1/30+1/30)^.5
+df <- rbind(ci_t.test,ci_manual)
+rownames(df) <- c("t.test","manual")
+knitr::kable(df, caption = "Confidence Interval of methods") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
 
+
+```{r}
+dose_0.5 <- ToothGrowth[ToothGrowth$dose == "0.5",]
+dose_1 <- ToothGrowth[ToothGrowth$dose == "1",]
+dose_2 <- ToothGrowth[ToothGrowth$dose == "2",]
+dose0.5 <- dose_0.5[,1]
+dose1 <- dose_1[,1]
+dose2 <- dose_2[,1]
 ```
 
 
