@@ -201,33 +201,49 @@ This conclusion is significant as it implies that the more samples we get and do
 \newpage
 
 # Part 2: Basic Inferential Data Analysis **Overview**
-The dataset ["ToothGrowth"](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/ToothGrowth) contains information about the length of odontoblasts (cells responsible for the tooth growth) in 60 guinea pigs.\newline Results of the analysis are presented in the following order.
+The dataset ["ToothGrowth"](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/ToothGrowth) contains information about the length of odontoblasts (cells responsible for the tooth growth) in 60 guinea pigs. Results of the analysis are presented in the following order.
 
-- **Sumamry Statistics of the dataset**. Summary statistics and distribution of the tooth length grouped by the delivery method (i.e. orange juice or ascorbic acid).
-- **Hypothesis testing**. Evaluation of whether method and/or dose affect toothj growth through hypothesis testing.
+- **Sumamry Statistics of the dataset**. Summary statistics and distribution of the tooth length grouped by the delivery method of vitamin c (i.e. orange juice or ascorbic acid) and its dose.
+- **Confidence Interval and Hypothesis Testing**. Evaluation of whether method and/or dose affect tooth growth through Confidence Interval and Hypothesis Testing.
 
 Summary
 
 
-### **Summary statistics of the tooth length grouped by delivery method**
-From the table below, we can see that both mean and median of the tooth length of those who got orange juice (`OJ`) are higher than those who were given vitamin C (`VC`).
+### **Summary statistics of the tooth length grouped by vitamin C delivery method and dose**
+From the statistics in Table 5 and 6 below, we can see that both method and dose seem to be playing role in the tooth length as especially the mean and median of the tooth length is higher among those given with orange juice (`OJ`) or with higher doses (`dose`).
 
 ```{r, out.width="60%", echo=FALSE}
 data(ToothGrowth)
 ToothGrowth$dose <- as.factor(ToothGrowth$dose)
 oj <- ToothGrowth[ToothGrowth$supp == "OJ",]
 vc <- ToothGrowth[ToothGrowth$supp == "VC",]
+dose_0.5 <- ToothGrowth[ToothGrowth$dose == "0.5",]
+dose_1 <- ToothGrowth[ToothGrowth$dose == "1",]
+dose_2 <- ToothGrowth[ToothGrowth$dose == "2",]
+
 valueoj <- oj %>%
   summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
 valuevc <- vc %>%
   summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
 summary <- rbind(valueoj, valuevc)
 rownames(summary) <- c("Orange Juice", "Vitamin C")
-knitr::kable(summary, caption = "Summary statistics of the tooth length") %>%
+knitr::kable(summary, caption = "Tooth length grouped by method") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+
+value0.5 <- dose_0.5 %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
+value1 <- dose_1 %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
+value2 <- dose_2 %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), max = max(len), sd = round(sd(len),3))
+summarize <- do.call("rbind", list(value0.5,value1,value2))
+rownames(summarize) <- c("0.5", "1","2")
+knitr::kable(summarize, caption = "Tooth length summary grouped by dose") %>%
   kable_styling(full_width = F, latex_options = "hold_position")
 ```
 
-From the histogram below, we can see that those with `VC` have wider range of distribution, whereas that of `OJ` is more concentrated around the median. However, due to the small sample size it is difficult to conclude whether it has the shape of normal distribution. \newline From the boxplot, we can see that as the dose gets higher, the level of growth also gets higher.
+#### **Distributions of the samples**
+It is also helpful to take a look at the histograms and boxplot grouped by method and dose shown below. We can see that those with `VC` have wider range of distribution, whereas that of `OJ` is more concentrated around the median which was higher than that of `VC`. From the one grouped by dose, we can see clearer difference in distribution, where doses `0.5` seems to be distributed on lower tail whereas `2` seems to be distributed on upper tail.
 
 ```{r, fig.show='hold', out.width="45%",  fig.align='center', echo=FALSE}
 ggplot(ToothGrowth, aes(x=len, fill = supp, color = supp)) +
@@ -236,6 +252,11 @@ ggplot(ToothGrowth, aes(x=len, fill = supp, color = supp)) +
   theme(plot.title = element_text(hjust = 0.5)) +
   xlab("length")
 
+ggplot(ToothGrowth, aes(x=len, fill = dose, color = dose)) +
+  geom_histogram(bins = 60) +
+  labs(title = "Distribution of the tooth length") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("length")
 
 ggplot(ToothGrowth, aes(x=supp, y=len, fill=dose)) +
   geom_boxplot(width=0.4) +
@@ -245,36 +266,64 @@ ggplot(ToothGrowth, aes(x=supp, y=len, fill=dose)) +
   ylab("tooth length")
 ```
 
-So, could we actually say that different delivery method correlates with the average of the tooth length? Confidence interval was calculated manually, as well as using `t.test` function in `r` as shown in the table below. As the results contain $0$, we cannot conclude that the method is correlated with the tooth length.
+### **Confidence Interval**
+So, could we actually say that different delivery method and/or doses correlates with the average tooth length? Confidence intervals were calculated using `t.test` function as shown in the table below. \newline As for the value calculated the result contains $0$, we cannot conclude that the method is correlated with the tooth length. 
 
 
 ```{r fig.show='hold', out.width="60%",  fig.align='center', echo=FALSE}
 methodoj <- oj[,1]
 methodvc <- vc[,1]
-ci_t.test <- t.test(methodoj, methodvc, paired = FALSE)$conf
-sp <- sqrt((29*6.606^2+29*8.266^2)/(30+30-2))
-ci_manual <- 20.663-16.963+c(-1,1)*qt(.975,58)*sp*(1/30+1/30)^.5
-df <- rbind(ci_t.test,ci_manual)
-rownames(df) <- c("t.test","manual")
-knitr::kable(df, caption = "Confidence Interval of methods") %>%
+dose0.5 <- dose_0.5[,1]
+dose1 <- dose_1[,1]
+dose2 <- dose_2[,1]
+ci_oj_vs_vc <- round(t.test(methodoj, methodvc, paired = FALSE)$conf,3)
+ci_0.5_vs_1 <- round(t.test(dose1, dose0.5, paired = FALSE)$conf,3)
+ci_0.5_vs_2 <- round(t.test(dose2, dose0.5, paired = FALSE)$conf,3)
+ci_1_vs_2 <- round(t.test(dose2, dose1, paired = FALSE)$conf,3)
+
+df <- do.call("rbind", list(ci_oj_vs_vc,ci_0.5_vs_1,ci_0.5_vs_2,ci_1_vs_2))
+rownames(df) <- c("OJ vs VC","0.5 vs 1","0.5 vs 2","1 vs 2")
+knitr::kable(df, caption = "Confidence Intervals vs each group") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+### **Hypothesis Testing**
+We can also reach same conclusion if we conduct hypothesis test with the following hypotheses.  
+
+- $H_0$: There is no difference in the mean between the two groups.  
+- $H_a$: There is significant difference in the mean between the two groups.  
+
+By setting the significance level $\alpha$ to be $0.05$ with two tails, we need the t-value to be more than $2$, but as shown in the t.test below, we can see that the value is less than $2$ and the p-value is also more than $0.05$.
+
+```{r, out.width="60%",  fig.align='center', echo=FALSE}
+t <- as.data.frame(round(t.test(methodoj, methodvc, paired = FALSE)$statistic,3))
+p <- as.data.frame(round(t.test(methodoj, methodvc, paired = FALSE)$p.value,3))
+table <- cbind(t,p)
+colnames(table) <- c("t-value","p-value")
+rownames(table) <- NULL
+knitr::kable(table, caption = "Hypothesis Testing") %>%
   kable_styling(full_width = F, latex_options = "hold_position")
 ```
 
 
-```{r}
-dose_0.5 <- ToothGrowth[ToothGrowth$dose == "0.5",]
-dose_1 <- ToothGrowth[ToothGrowth$dose == "1",]
-dose_2 <- ToothGrowth[ToothGrowth$dose == "2",]
+
+
+
+```{r, echo=FALSE}
+
 dose0.5 <- dose_0.5[,1]
 dose1 <- dose_1[,1]
 dose2 <- dose_2[,1]
+t.test(dose1, dose0.5, paired = FALSE)$conf
+
+
+
 ```
 
 
 
 \newpage
 
-### Appendix: Codes for this report
+# Appendix: Codes for this report
 
 ```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```
