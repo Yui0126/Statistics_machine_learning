@@ -1,0 +1,158 @@
+---
+title: "Statistical Inference Final Project Part 2"
+author: "Yui Naruse (1/1/2022)"
+date:
+output: 
+  pdf_document: default
+  html_document: defaulthtml_document
+---
+
+```{r, echo=FALSE, results='hide', message=FALSE}
+library(devtools)
+library(dplyr)
+library(ggplot2)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(tinytex)
+```
+
+```{r setup, echo=FALSE, results='hide', include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
+# Basic Inferential Data Analysis **Overview**
+The dataset ["ToothGrowth"](https://www.rdocumentation.org/packages/datasets/versions/3.6.2/topics/ToothGrowth) contains information about the length of odontoblasts (cells responsible for the tooth growth) in 60 guinea pigs. Results of the analysis are presented in the following order.
+
+- **Sumamry Statistics of the dataset**. Summary statistics and distribution of the tooth length grouped by the delivery method of vitamin c (i.e. orange juice or ascorbic acid) and its dose.
+- **Confidence Interval and Hypothesis Testing**. Evaluation of whether method and/or dose affect tooth growth through Confidence Interval and Hypothesis Testing.
+
+In summary, analyses showed that the vitamin C dose, instead of its delivery method plays and important role in tooth growth, where higher doses resulted in higher level of tooth growth.
+
+## **Summary statistics grouped by vitamin C delivery method and dose**
+From the statistics in Table 5 and 6 below, we can see that both method and dose seem to be playing role in the tooth length as especially the mean and median of the tooth length is higher among those given with orange juice (`OJ`) or with higher doses (`dose`).
+
+```{r, out.width="60%", echo=FALSE}
+data(ToothGrowth)
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+oj <- ToothGrowth[ToothGrowth$supp == "OJ",]
+vc <- ToothGrowth[ToothGrowth$supp == "VC",]
+dose_0.5 <- ToothGrowth[ToothGrowth$dose == "0.5",]
+dose_1 <- ToothGrowth[ToothGrowth$dose == "1",]
+dose_2 <- ToothGrowth[ToothGrowth$dose == "2",]
+
+valueoj <- oj %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), 
+            max = max(len), sd = round(sd(len),3))
+valuevc <- vc %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), 
+            max = max(len), sd = round(sd(len),3))
+summary <- rbind(valueoj, valuevc)
+rownames(summary) <- c("Orange Juice", "Vitamin C")
+knitr::kable(summary, caption = "Tooth length grouped by method") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+
+value0.5 <- dose_0.5 %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), 
+            max = max(len), sd = round(sd(len),3))
+value1 <- dose_1 %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), 
+            max = max(len), sd = round(sd(len),3))
+value2 <- dose_2 %>%
+  summarise(mean = round(mean(len),3), median = median(len), min = min(len), 
+            max = max(len), sd = round(sd(len),3))
+summarize <- do.call("rbind", list(value0.5,value1,value2))
+rownames(summarize) <- c("0.5", "1","2")
+knitr::kable(summarize, caption = "Tooth length summary grouped by dose") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+
+### **Distributions of the samples**  
+
+It is also helpful to take a look at the histograms and boxplot grouped by method and dose shown below. We can see that those with `VC` have wider range of distribution, whereas that of `OJ` is more concentrated around the median which was higher than that of `VC`. From the one grouped by dose, we can see clearer difference in distribution, where doses `0.5` seems to be distributed on lower tail whereas `2` seems to be distributed on upper tail.
+
+```{r, fig.show='hold', out.width="40%",  fig.align='center', echo=FALSE}
+ggplot(ToothGrowth, aes(x=len, fill = supp, color = supp)) +
+  geom_histogram(bins = 60) +
+  labs(title = "Distribution of the tooth length") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("length")
+
+ggplot(ToothGrowth, aes(x=len, fill = dose, color = dose)) +
+  geom_histogram(bins = 60) +
+  labs(title = "Distribution of the tooth length") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("length")
+
+ggplot(ToothGrowth, aes(x=supp, y=len, fill=dose)) +
+  geom_boxplot(width=0.4) +
+  labs(title = "Boxplot of the tooth length") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("method") +
+  ylab("tooth length")
+```
+
+## **Confidence Interval**
+So, could we actually say that different delivery method and/or dose affects the average tooth length? Confidence intervals were calculated using `t.test` function and the results are presented in the table below. \newline As for the result comparing the `OJ` and `VC` contains $0$, we cannot conclude that the method affects the tooth length. However, for all the values comparing the doses show the higher the dose is, the higher the tooth growth, with the result showing highest significance between doses `0.5` and `2`. In other words, when a guinea pig was given 2 doses of vitamin C, the subject likely showed tooth growth of $12.834$ to $18.156$ higher on average compared to those given only `0.5`.
+
+
+```{r fig.show='hold', out.width="60%",  fig.align='center', echo=FALSE}
+methodoj <- oj[,1]
+methodvc <- vc[,1]
+dose0.5 <- dose_0.5[,1]
+dose1 <- dose_1[,1]
+dose2 <- dose_2[,1]
+ci_oj_vs_vc <- round(t.test(methodoj, methodvc, paired = FALSE)$conf,3)
+ci_0.5_vs_1 <- round(t.test(dose1, dose0.5, paired = FALSE)$conf,3)
+ci_0.5_vs_2 <- round(t.test(dose2, dose0.5, paired = FALSE)$conf,3)
+ci_1_vs_2 <- round(t.test(dose2, dose1, paired = FALSE)$conf,3)
+
+df <- do.call("rbind", list(ci_oj_vs_vc,ci_0.5_vs_1,ci_0.5_vs_2,ci_1_vs_2))
+rownames(df) <- c("OJ vs VC","0.5 vs 1","0.5 vs 2","1 vs 2")
+knitr::kable(df, caption = "Confidence Intervals vs each group") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+## **Hypothesis Testing**
+We can also reach the same conclusion by conducting Hypothesis test with the following hypotheses.  
+
+- $H_0$: There is no difference in the tooth length between different groups.  
+- $H_a$: There is significant difference in the tooth length between different groups.  
+
+As I do not want to commit type 1 error, I will set two sided significance level $\alpha$ to be $0.05$ with degree of freedom 55(see codes how I got this value), meaning we need the t-value to be more than $2$ to reject null hypothesis. \newline As shown in the Table 8, we can see that the t-value between different method group is less than $2$ and the p-value is also more than $0.05$, meaning we cannot reject $H_0$. On the other hand, all the values concerning different groups of doses have higher than $2$ t-value and quite low p-value, suggesting vitamin C dose playing significant role in tooth growth. 
+
+```{r, out.width="40%",  fig.align='center', echo=FALSE}
+mt <- as.data.frame(round(t.test(methodoj, methodvc, paired = FALSE)$statistic,3))
+mp <- as.data.frame(round(t.test(methodoj, methodvc, paired = FALSE)$p.value,3))
+dose0.5_1t <- as.data.frame(round(t.test(dose1, dose0.5, paired = FALSE)$statistic,3))
+dose0.5_1p <- as.data.frame(round(t.test(dose1, dose0.5, paired = FALSE)$p.value,7))
+dose0.5_2t <- as.data.frame(round(t.test(dose2, dose0.5, paired = FALSE)$statistic,3))
+dose0.5_2p <- as.data.frame(round(t.test(dose2, dose0.5, paired = FALSE)$p.value,7))
+dose1_2t <- as.data.frame(round(t.test(dose2, dose1, paired = FALSE)$statistic,3))
+dose1_2p <- as.data.frame(round(t.test(dose2, dose1, paired = FALSE)$p.value,7))
+table <- data.frame()
+table <- matrix(table, 4,2)
+mtp <- c(mt,mp)
+dose0.51tp <- c(dose0.5_1t,dose0.5_1p)
+dose0.52tp <- c(dose0.5_2t,dose0.5_2p)
+dose12tp <- c(dose1_2t,dose1_2p)
+table <- do.call("rbind", list(mtp,dose0.51tp,dose0.52tp,dose12tp))
+colnames(table) <- c("t-value","p-value")
+rownames(table) <- c("OJ vs VC","0.5 vs 1","0.5 vs 2","1 vs 2")
+knitr::kable(table, caption = "Hypothesis Testing") %>%
+  kable_styling(full_width = F, latex_options = "hold_position")
+```
+
+
+
+## **Conclusion**  
+Through the evaluation of confidence interval and hypothesis testing, we can conclude that the vitamin C dose, rather than its delivery method plays an important role in deciding the tooth length. Since this is an experimental study, we can also say that vitamin C dose seems to be actually *causing* the growth, although it is difficult to conclude if there is any mediating factor. \newline It is worth noting however, that if I set the significance level a bit higher (e.g. $0.1$), the hypothesis testing evaluating the effectiveness of delivery method could have yielded a significant t-value. Also it should be noted that the result might be quite different if we had larger sample size. All things considered, the results imply the effectiveness of vitamin C in tooth growth and it will be interesting to conduct an experiment on human to see if we can get similar result. 
+
+
+#### Thank you for taking the time to review my report! :)
+
+\newpage
+# Appendix: Codes for this report
+
+```{r ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
